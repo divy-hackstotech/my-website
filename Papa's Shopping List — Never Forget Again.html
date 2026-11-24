@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Papa's Shopping List — Never Forget Again</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tap-card {
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background-color 0.18s ease, border-color 0.18s ease;
+    }
+    .tap-card:active {
+      transform: scale(0.985);
+    }
+    .toast-enter {
+      animation: toastSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes toastSlideUp {
+      from { opacity: 0; transform: translate(-50%, 16px); }
+      to { opacity: 1; transform: translate(-50%, 0); }
+    }
+    .pulse-ring {
+      animation: pulseRing 1.4s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+    @keyframes pulseRing {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+      70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+  </style>
+</head>
+<body class="bg-amber-50/50 text-slate-900 min-h-screen flex flex-col">
+
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-amber-200/80 shadow-sm">
+    <div class="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+          <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+        </div>
+        <div class="min-w-0">
+          <h1 id="app-title" class="text-base sm:text-lg font-extrabold text-slate-900 truncate">Papa's Shopping List</h1>
+          <p id="app-subtitle" class="text-xs text-slate-500 truncate">Easy checklist so nothing is forgotten</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button id="sound-toggle" type="button" title="Toggle sound" class="p-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 transition" aria-label="Toggle sound">
+          <i id="sound-icon" data-lucide="volume-2" class="w-4 h-4"></i>
+        </button>
+        <button id="lang-toggle" type="button" class="px-3 py-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 text-xs sm:text-sm font-semibold transition">
+          हिंदी / EN
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode Switcher Bar -->
+    <div class="max-w-3xl mx-auto px-4 pb-3">
+      <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-2xl">
+        <button id="tab-add" type="button" class="py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition bg-white text-amber-700 shadow-sm">
+          <i data-lucide="plus-circle" class="w-4 h-4"></i>
+          <span id="tab-add-label">Add for Papa</span>
+        </button>
+        <button id="tab-papa" type="button" class="py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition text-slate-600 hover:text-slate-900">
+          <i data-lucide="check-square" class="w-4 h-4"></i>
+          <span id="tab-papa-label">Papa's Shop Mode</span>
+          <span id="pending-badge" class="ml-0.5 px-2 py-0.5 text-xs rounded-full bg-amber-500 text-white font-bold">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-5 space-y-5">
+
+    <!-- Progress & Quick Share Banner -->
+    <section class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-2.5">
+        <div>
+          <p id="progress-text" class="text-sm font-bold text-slate-800">0 of 0 items bought</p>
+          <p id="urgent-summary" class="text-xs text-rose-600 font-semibold mt-0.5"></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="copy-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold transition">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+            <span id="copy-btn-label">Copy List</span>
+          </button>
+          <button id="whatsapp-btn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition">
+            <i data-lucide="send" class="w-4 h-4"></i>
+            <span id="whatsapp-btn-label">Send to Papa</span>
+          </button>
+        </div>
+      </div>
+      <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-full bg-emerald-500 rounded-full transition-all duration-300" style="width: 0%"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 1: ADD FOR PAPA -->
+    <section id="view-add" class="space-y-5">
+      <!-- Add Item Card -->
+      <form id="add-form" class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="form-heading" class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+            <span>Tell Papa What to Buy</span>
+          </h2>
+          <button id="voice-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-bold transition">
+            <i data-lucide="mic" class="w-3.5 h-3.5"></i>
+            <span id="voice-btn-label">Speak Item</span>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-7">
+            <label for="item-name" id="label-item-name" class="block text-xs font-semibold text-slate-600 mb-1">Item Name *</label>
+            <input id="item-name" type="text" required placeholder="e.g., Amul Milk, Tomatoes, Cough Syrup" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm bg-white" />
+          </div>
+          <div class="sm:col-span-5">
+            <label for="item-qty" id="label-item-qty" class="block text-xs font-semibold text-slate-600 mb-1">Quantity</label>
+            <input id="item-qty" type="text" placeholder="e.g., 2 packets, 1 kg" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm bg-white" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          <div class="sm:col-span-5">
+            <label for="item-category" id="label-item-cat" class="block text-xs font-semibold text-slate-600 mb-1">Shop / Category</label>
+            <select id="item-category" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white">
+              <option value="dairy">🥛 Dairy & Bakery</option>
+              <option value="veggies">🥬 Vegetables & Fruits</option>
+              <option value="grocery">🛒 Kirana / Groceries</option>
+              <option value="pharmacy">💊 Pharmacy / Medicine</option>
+              <option value="household">🧼 Household & Other</option>
+            </select>
+          </div>
+          <div class="sm:col-span-7">
+            <label for="item-note" id="label-item-note" class="block text-xs font-semibold text-slate-600 mb-1">Note for Papa (Optional)</label>
+            <input id="item-note" type="text" placeholder="e.g., Blue packet, not too ripe" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white" />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+          <label class="inline-flex items-center gap-2.5 cursor-pointer select-none">
+            <input id="item-urgent" type="checkbox" class="w-5 h-5 rounded border-slate-300 text-rose-600 focus:ring-rose-500" />
+            <span id="label-urgent" class="text-sm font-bold text-rose-600 flex items-center gap-1">
+              <i data-lucide="alert-circle" class="w-4 h-4"></i>
+              <span>Urgent (Must buy today!)</span>
+            </span>
+          </label>
+
+          <button type="submit" id="add-submit-btn" class="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-sm shadow-sm flex items-center justify-center gap-2 transition">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            <span id="add-submit-label">Add to Papa's List</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Quick Tap Essentials -->
+      <div class="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-sm">
+        <h3 id="quick-heading" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">1-Tap Common Items</h3>
+        <div id="quick-items-grid" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <!-- Current List Preview (Editable) -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 id="current-list-heading" class="text-sm font-extrabold text-slate-800">Items on Papa's List</h3>
+          <div class="flex items-center gap-3">
+            <button id="clear-bought-btn" type="button" class="text-xs font-semibold text-slate-500 hover:text-rose-600 transition hidden">
+              Clear Bought Items
+            </button>
+            <button id="empty-all-btn" type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700 transition hidden">
+              Empty List
+            </button>
+          </div>
+        </div>
+        <div id="add-view-list" class="space-y-2.5"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: PAPA'S SHOPPING MODE (BIG & EASY) -->
+    <section id="view-papa" class="hidden space-y-4">
+      <!-- Filter Pills -->
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+          <button type="button" data-filter="all" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-white transition">All</button>
+          <button type="button" data-filter="pending" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition">To Buy</button>
+          <button type="button" data-filter="urgent" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition">Urgent</button>
+          <button type="button" data-filter="bought" class="filter-pill px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-100 transition">Bought</button>
+        </div>
+
+        <button id="reset-all-btn" type="button" class="text-xs font-semibold text-slate-500 hover:text-rose-600 px-2.5 py-1.5 rounded-lg hover:bg-rose-50 transition">
+          Clear Completed
+        </button>
+      </div>
+
+      <!-- Big Tap Cards Container -->
+      <div id="papa-list-container" class="space-y-4"></div>
+    </section>
+
+  </main>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold flex items-center gap-2">
+    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toast-msg"></span>
+  </div>
+
+  <!-- Passkey Confirmation Modal (Replaces window.confirm) -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-900/45 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-xl border border-slate-200 space-y-4">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+          <i data-lucide="lock" class="w-4 h-4"></i>
+        </div>
+        <h3 id="modal-title" class="text-base font-extrabold text-slate-900">Enter Passkey</h3>
+      </div>
+      <p id="modal-desc" class="text-sm text-slate-600">Enter the passkey to confirm this action.</p>
+      <div>
+        <label for="passkey-input" id="passkey-label" class="block text-xs font-semibold text-slate-600 mb-1">Passkey</label>
+        <input id="passkey-input" type="password" autocomplete="off" placeholder="Enter passkey..." class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-rose-500 text-sm bg-white" />
+        <p id="passkey-error" class="hidden text-xs font-semibold text-rose-600 mt-1.5"></p>
+      </div>
+      <div class="flex items-center justify-end gap-2">
+        <button id="modal-cancel" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition">Cancel</button>
+        <button id="modal-confirm" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const STORAGE_KEY = 'papa_shopping_list_v1';
+      const LANG_KEY = 'papa_shopping_lang_v1';
+      const PASSKEY = '989322608280857861862810';
+
+      const CATEGORIES = {
+        dairy: { en: 'Dairy & Bakery', hi: 'दूध और बेकरी', icon: '🥛', badge: 'bg-sky-50 text-sky-800 border-sky-200' },
+        veggies: { en: 'Vegetables & Fruits', hi: 'सब्जी और फल', icon: '🥬', badge: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+        grocery: { en: 'Kirana / Groceries', hi: 'किराना / राशन', icon: '🛒', badge: 'bg-amber-50 text-amber-800 border-amber-200' },
+        pharmacy: { en: 'Pharmacy / Medicine', hi: 'दवाई / मेडिकल', icon: '💊', badge: 'bg-rose-50 text-rose-800 border-rose-200' },
+        household: { en: 'Household & Other', hi: 'घर का सामान', icon: '🧼', badge: 'bg-indigo-50 text-indigo-800 border-indigo-200' }
+      };
+
+      const QUICK_PRESETS = [
+        { en: 'Milk', hi: 'दूध', qty: '1 Litre', cat: 'dairy' },
+        { en: 'Bread', hi: 'ब्रेड', qty: '1 Packet', cat: 'dairy' },
+        { en: 'Curd / Dahi', hi: 'दही', qty: '500g', cat: 'dairy' },
+        { en: 'Tomatoes', hi: 'टमाटर', qty: '1 kg', cat: 'veggies' },
+        { en: 'Onions', hi: 'प्याज', qty: '2 kg', cat: 'veggies' },
+        { en: 'Potatoes', hi: 'आलू', qty: '2 kg', cat: 'veggies' },
+        { en: 'Coriander & Chilli', hi: 'धनिया और मिर्च', qty: '1 bunch', cat: 'veggies' },
+        { en: 'Atta (Wheat Flour)', hi: 'आटा', qty: '5 kg', cat: 'grocery' },
+        { en: 'Tea / Chai Patti', hi: 'चाय पत्ती', qty: '250g', cat: 'grocery' },
+        { en: 'Cooking Oil', hi: 'खाना बनाने का तेल', qty: '1 Litre', cat: 'grocery' },
+        { en: 'Medicine', hi: 'दवाई', qty: '1 Strip', cat: 'pharmacy' },
+        { en: 'Dish Soap', hi: 'बर्तन धोने का साबुन', qty: '1 Bar', cat: 'household' }
+      ];
+
+      const DEFAULT_ITEMS = [
+        { id: '1', name: 'Amul Gold Milk', qty: '2 packets', category: 'dairy', note: 'Blue/Orange fresh packet', urgent: true, bought: false, createdAt: Date.now() - 300000 },
+        { id: '2', name: 'Fresh Tomatoes', qty: '1 kg', category: 'veggies', note: 'Firm red ones', urgent: false, bought: false, createdAt: Date.now() - 200000 },
+        { id: '3', name: 'Brown Bread', qty: '1 packet', category: 'dairy', note: 'Check expiry date', urgent: false, bought: true, createdAt: Date.now() - 100000 },
+        { id: '4', name: 'Paracetamol / Crocin', qty: '1 strip', category: 'pharmacy', note: 'For home first-aid box', urgent: true, bought: false, createdAt: Date.now() - 50000 }
+      ];
+
+      const TEXT = {
+        en: {
+          title: "Papa's Shopping List",
+          subtitle: 'Easy checklist so nothing is forgotten',
+          tabAdd: 'Add for Papa',
+          tabPapa: "Papa's Shop Mode",
+          copy: 'Copy List',
+          whatsapp: 'Send to Papa',
+          formHeading: 'Tell Papa What to Buy',
+          voiceBtn: 'Speak Item',
+          listening: 'Listening...',
+          labelName: 'Item Name *',
+          labelQty: 'Quantity',
+          labelCat: 'Shop / Category',
+          labelNote: 'Note for Papa (Optional)',
+          labelUrgent: 'Urgent (Must buy today!)',
+          addSubmit: "Add to Papa's List",
+          quickHeading: '1-Tap Common Items',
+          currentList: "Items on Papa's List",
+          clearBought: 'Clear Bought Items',
+          allDoneTitle: 'All items bought! Great job, Papa!',
+          allDoneSub: 'Nothing left on the list right now.',
+          emptyTitle: 'The list is empty!',
+          emptySub: 'Add items above or tap a quick item to get started.',
+          boughtLabel: 'BOUGHT',
+          tapToBuy: 'Tap when bought',
+          urgentBadge: 'URGENT',
+          boughtCount: (bought, total) => `${bought} of ${total} items bought`,
+          urgentCount: (n) => n > 0 ? `${n} urgent item${n > 1 ? 's' : ''} pending` : 'No urgent items pending',
+          toastAdded: (name) => `Added "${name}" to Papa's list`,
+          toastCopied: 'Shopping list copied! Ready to paste.',
+          toastCleared: 'Cleared bought items.',
+          toastVoiceUnsupported: 'Voice input is not supported in this browser.',
+          emptyList: 'Empty List',
+          toastEmptied: 'Emptied the entire shopping list.',
+          toastDeleted: 'Item deleted.',
+          passkeyLabel: 'Passkey',
+          passkeyPlaceholder: 'Enter passkey...',
+          passkeyWrong: 'Incorrect passkey. Please try again.',
+          modalTitleDelete: 'Enter Passkey to Delete',
+          modalDescDelete: 'Enter the passkey to delete this item from the list.',
+          modalTitleClear: 'Enter Passkey to Clear Bought',
+          modalDescClear: 'Enter the passkey to remove all items marked as bought.',
+          modalTitleEmpty: 'Enter Passkey to Empty List',
+          modalDescEmpty: 'Enter the passkey to empty the entire shopping list.',
+          modalCancel: 'Cancel',
+          modalConfirm: 'Verify & Confirm',
+          filters: { all: 'All', pending: 'To Buy', urgent: 'Urgent', bought: 'Bought' }
+        },
+        hi: {
+          title: 'पापा की खरीदारी लिस्ट',
+          subtitle: 'आसान लिस्ट ताकि कोई सामान न छूटे',
+          tabAdd: 'सामान जोड़ें',
+          tabPapa: 'पापा का शॉप मोड',
+          copy: 'लिस्ट कॉपी करें',
+          whatsapp: 'पापा को भेजें',
+          formHeading: 'पापा को क्या लाना है लिखें',
+          voiceBtn: 'बोलकर लिखें',
+          listening: 'सुन रहा हूँ...',
+          labelName: 'सामान का नाम *',
+          labelQty: 'मात्रा (कितना लाना है)',
+          labelCat: 'दुकान / श्रेणी',
+          labelNote: 'पापा के लिए नोट (वैकल्पिक)',
+          labelUrgent: 'जरूरी (आज ही लाना है!)',
+          addSubmit: 'लिस्ट में जोड़ें',
+          quickHeading: '1-टैप रोज़मर्रा का सामान',
+          currentList: 'पापा की लिस्ट के सामान',
+          clearBought: 'खरीदे गए हटाएं',
+          allDoneTitle: 'सारा सामान आ गया! शाबाश पापा!',
+          allDoneSub: 'अभी लिस्ट में कुछ भी बाकी नहीं है।',
+          emptyTitle: 'लिस्ट खाली है!',
+          emptySub: 'ऊपर से नया सामान जोड़ें या 1-टैप बटन दबाएं।',
+          boughtLabel: 'खरीद लिया',
+          tapToBuy: 'खरीदने पर टैप करें',
+          urgentBadge: 'जरूरी',
+          boughtCount: (bought, total) => `${total} में से ${bought} सामान खरीदे गए`,
+          urgentCount: (n) => n > 0 ? `${n} जरूरी सामान बाकी है` : 'कोई जरूरी सामान बाकी नहीं',
+          toastAdded: (name) => `"${name}" लिस्ट में जुड़ गया`,
+          toastCopied: 'लिस्ट कॉपी हो गई! अब भेज सकते हैं।',
+          toastCleared: 'खरीदे गए सामान हटा दिए गए।',
+          toastVoiceUnsupported: 'इस ब्राउज़र में बोलकर लिखने की सुविधा उपलब्ध नहीं है।',
+          emptyList: 'पूरी लिस्ट खाली करें',
+          toastEmptied: 'पूरी लिस्ट खाली कर दी गई।',
+          toastDeleted: 'सामान हटा दिया गया।',
+          passkeyLabel: 'पासकी (Passkey)',
+          passkeyPlaceholder: 'पासकी दर्ज करें...',
+          passkeyWrong: 'गलत पासकी! कृपया फिर से प्रयास करें।',
+          modalTitleDelete: 'हटाने के लिए पासकी डालें',
+          modalDescDelete: 'इस सामान को लिस्ट से हटाने के लिए पासकी दर्ज करें।',
+          modalTitleClear: 'खरीदे गए हटाने के लिए पासकी डालें',
+          modalDescClear: 'खरीदे गए सभी सामान हटाने के लिए पासकी दर्ज करें।',
+          modalTitleEmpty: 'पूरी लिस्ट खाली करने के लिए पासकी डालें',
+          modalDescEmpty: 'पूरी लिस्ट खाली करने के लिए पासकी दर्ज करें।',
+          modalCancel: 'रद्द करें',
+          modalConfirm: 'पुष्टि करें',
+          filters: { all: 'सभी', pending: 'बाकी', urgent: 'जरूरी', bought: 'खरीदे गए' }
+        }
+      };
+
+      let state = {
+        items: loadItems(),
+        lang: loadLang(),
+        view: 'add', // 'add' | 'papa'
+        filter: 'all', // 'all' | 'pending' | 'urgent' | 'bought'
+        soundEnabled: true
+      };
+
+      function loadItems() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) return parsed;
+          }
+        } catch (e) {}
+        return DEFAULT_ITEMS.slice();
+      }
+
+      function saveItems() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state.items));
+        } catch (e) {}
+      }
+
+      function loadLang() {
+        try {
+          const l = localStorage.getItem(LANG_KEY);
+          if (l === 'hi' || l === 'en') return l;
+        } catch (e) {}
+        return 'en';
+      }
+
+      function saveLang() {
+        try {
+          localStorage.setItem(LANG_KEY, state.lang);
+        } catch (e) {}
+      }
+
+      function playChime(type) {
+        if (!state.soundEnabled) return;
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ctx = new AudioCtx();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.type = 'sine';
+          const now = ctx.currentTime;
+          if (type === 'check') {
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.12);
+          } else {
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(554.37, now + 0.08);
+          }
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+          osc.start(now);
+          osc.stop(now + 0.18);
+        } catch (e) {}
+      }
+
+      let toastTimer = null;
+      function showToast(msg) {
+        const el = document.getElementById('toast');
+        const msgEl = document.getElementById('toast-msg');
+        msgEl.textContent = msg;
+        el.classList.remove('hidden', 'toast-enter');
+        void el.offsetWidth;
+        el.classList.add('toast-enter');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          el.classList.add('hidden');
+        }, 2600);
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function addItem(name, qty, category, note, urgent) {
+        const cleanName = name.trim();
+        if (!cleanName) return;
+        state.items.unshift({
+          id: String(Date.now()) + '_' + Math.random().toString(36).slice(2, 6),
+          name: cleanName,
+          qty: (qty || '').trim() || '1',
+          category: CATEGORIES[category] ? category : 'grocery',
+          note: (note || '').trim(),
+          urgent: Boolean(urgent),
+          bought: false,
+          createdAt: Date.now()
+        });
+        saveItems();
+        playChime('add');
+        showToast(TEXT[state.lang].toastAdded(cleanName));
+        render();
+      }
+
+      function toggleBought(id) {
+        const item = state.items.find(i => i.id === id);
+        if (!item) return;
+        item.bought = !item.bought;
+        saveItems();
+        if (item.bought) {
+          playChime('check');
+          const pending = state.items.filter(i => !i.bought).length;
+          if (pending === 0 && state.items.length > 0 && typeof confetti === 'function') {
+            confetti({ particleCount: 70, spread: 60, origin: { y: 0.7 } });
+          }
+        }
+        render();
+      }
+
+      function toggleUrgent(id) {
+        const item = state.items.find(i => i.id === id);
+        if (!item) return;
+        item.urgent = !item.urgent;
+        saveItems();
+        render();
+      }
+
+      function deleteItem(id) {
+        state.items = state.items.filter(i => i.id !== id);
+        saveItems();
+        showToast(TEXT[state.lang].toastDeleted);
+        render();
+      }
+
+      function clearBought() {
+        state.items = state.items.filter(i => !i.bought);
+        saveItems();
+        showToast(TEXT[state.lang].toastCleared);
+        render();
+      }
+
+      function emptyAll() {
+        state.items = [];
+        saveItems();
+        showToast(TEXT[state.lang].toastEmptied);
+        render();
+      }
+
+      function buildShareText() {
+        const t = TEXT[state.lang];
+        const pending = state.items.filter(i => !i.bought);
+        if (pending.length === 0) {
+          return state.lang === 'hi'
+            ? 'पापा, अभी कोई सामान बाकी नहीं है!'
+            : 'Papa, all items on the list are already bought!';
+        }
+        const urgentList = pending.filter(i => i.urgent);
+        const normalList = pending.filter(i => !i.urgent);
+        let lines = [];
+        lines.push(state.lang === 'hi' ? '🛒 *पापा, कृपया यह सामान ले आएं:*' : '🛒 *Papa, please buy these items:*');
+        if (urgentList.length > 0) {
+          lines.push('');
+          lines.push(state.lang === 'hi' ? '🔴 *जरूरी (आज ही):*' : '🔴 *URGENT (Today):*');
+          urgentList.forEach((item, idx) => {
+            const catIcon = CATEGORIES[item.category]?.icon || '•';
+            const notePart = item.note ? ` (${item.note})` : '';
+            lines.push(`${idx + 1}. ${catIcon} *${item.name}* — ${item.qty}${notePart}`);
+          });
+        }
+        if (normalList.length > 0) {
+          lines.push('');
+          lines.push(state.lang === 'hi' ? '🟡 *सामान्य सामान:*' : '🟡 *Regular Items:*');
+          normalList.forEach((item, idx) => {
+            const catIcon = CATEGORIES[item.category]?.icon || '•';
+            const notePart = item.note ? ` (${item.note})` : '';
+            lines.push(`${idx + 1}. ${catIcon} ${item.name} — ${item.qty}${notePart}`);
+          });
+        }
+        return lines.join('\n');
+      }
+
+      function copyListToClipboard() {
+        const text = buildShareText();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {
+            showToast(TEXT[state.lang].toastCopied);
+          }).catch(() => fallbackCopy(text));
+        } else {
+          fallbackCopy(text);
+        }
+      }
+
+      function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+          document.execCommand('copy');
+          showToast(TEXT[state.lang].toastCopied);
+        } catch (e) {}
+        document.body.removeChild(ta);
+      }
+
+      function sendWhatsApp() {
+        const text = encodeURIComponent(buildShareText());
+        window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener,noreferrer');
+      }
+
+      function renderStaticText() {
+        const t = TEXT[state.lang];
+        document.getElementById('app-title').textContent = t.title;
+        document.getElementById('app-subtitle').textContent = t.subtitle;
+        document.getElementById('tab-add-label').textContent = t.tabAdd;
+        document.getElementById('tab-papa-label').textContent = t.tabPapa;
+        document.getElementById('copy-btn-label').textContent = t.copy;
+        document.getElementById('whatsapp-btn-label').textContent = t.whatsapp;
+        document.getElementById('form-heading').querySelector('span').textContent = t.formHeading;
+        document.getElementById('voice-btn-label').textContent = t.voiceBtn;
+        document.getElementById('label-item-name').textContent = t.labelName;
+        document.getElementById('label-item-qty').textContent = t.labelQty;
+        document.getElementById('label-item-cat').textContent = t.labelCat;
+        document.getElementById('label-item-note').textContent = t.labelNote;
+        document.getElementById('label-urgent').querySelector('span').textContent = t.labelUrgent;
+        document.getElementById('add-submit-label').textContent = t.addSubmit;
+        document.getElementById('quick-heading').textContent = t.quickHeading;
+        document.getElementById('current-list-heading').textContent = t.currentList;
+        document.getElementById('clear-bought-btn').textContent = t.clearBought;
+        document.getElementById('empty-all-btn').textContent = t.emptyList;
+        document.getElementById('reset-all-btn').textContent = t.clearBought;
+        document.getElementById('passkey-label').textContent = t.passkeyLabel;
+        document.getElementById('passkey-input').placeholder = t.passkeyPlaceholder;
+        document.getElementById('modal-cancel').textContent = t.modalCancel;
+        document.getElementById('modal-confirm').textContent = t.modalConfirm;
+
+        // Category select options
+        const select = document.getElementById('item-category');
+        Array.from(select.options).forEach(opt => {
+          const c = CATEGORIES[opt.value];
+          if (c) opt.textContent = `${c.icon} ${c[state.lang]}`;
+        });
+
+        // Filter pills
+        document.querySelectorAll('.filter-pill').forEach(btn => {
+          const f = btn.getAttribute('data-filter');
+          if (t.filters[f]) btn.textContent = t.filters[f];
+        });
+      }
+
+      function renderQuickPresets() {
+        const grid = document.getElementById('quick-items-grid');
+        grid.innerHTML = QUICK_PRESETS.map((p, idx) => {
+          const catIcon = CATEGORIES[p.cat]?.icon || '🛒';
+          const label = state.lang === 'hi' ? p.hi : p.en;
+          return `
+            <button type="button" data-preset-idx="${idx}" class="preset-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-amber-50 hover:border-amber-300 text-xs font-semibold text-slate-700 transition">
+              <span>${catIcon}</span>
+              <span>${escapeHtml(label)}</span>
+              <span class="text-slate-400 font-normal">(${escapeHtml(p.qty)})</span>
+            </button>
+          `;
+        }).join('');
+      }
+
+      function renderProgress() {
+        const t = TEXT[state.lang];
+        const total = state.items.length;
+        const bought = state.items.filter(i => i.bought).length;
+        const pending = total - bought;
+        const urgentPending = state.items.filter(i => !i.bought && i.urgent).length;
+        const pct = total === 0 ? 0 : Math.round((bought / total) * 100);
+
+        document.getElementById('progress-text').textContent = t.boughtCount(bought, total);
+        document.getElementById('urgent-summary').textContent = t.urgentCount(urgentPending);
+        document.getElementById('progress-bar').style.width = `${pct}%`;
+        document.getElementById('pending-badge').textContent = pending;
+
+        const clearBtn = document.getElementById('clear-bought-btn');
+        if (bought > 0) clearBtn.classList.remove('hidden');
+        else clearBtn.classList.add('hidden');
+
+        const emptyBtn = document.getElementById('empty-all-btn');
+        if (total > 0) emptyBtn.classList.remove('hidden');
+        else emptyBtn.classList.add('hidden');
+      }
+
+      function renderAddViewList() {
+        const container = document.getElementById('add-view-list');
+        const t = TEXT[state.lang];
+        if (state.items.length === 0) {
+          container.innerHTML = `
+            <div class="bg-white rounded-2xl border border-dashed border-slate-300 p-8 text-center">
+              <p class="text-sm font-bold text-slate-700">${t.emptyTitle}</p>
+              <p class="text-xs text-slate-500 mt-1">${t.emptySub}</p>
+            </div>
+          `;
+          return;
+        }
+
+        const sorted = [...state.items].sort((a, b) => {
+          if (a.bought !== b.bought) return a.bought ? 1 : -1;
+          if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+          return b.createdAt - a.createdAt;
+        });
+
+        container.innerHTML = sorted.map(item => {
+          const cat = CATEGORIES[item.category] || CATEGORIES.grocery;
+          return `
+            <div class="tap-card bg-white rounded-2xl border ${item.bought ? 'border-slate-200 opacity-65' : item.urgent ? 'border-rose-300 bg-rose-50/30' : 'border-slate-200'} p-3.5 flex items-center justify-between gap-3 shadow-xs">
+              <div class="flex items-center gap-3 min-w-0 flex-1">
+                <button type="button" data-action="toggle" data-id="${item.id}" class="w-7 h-7 rounded-lg border-2 flex items-center justify-center shrink-0 transition ${item.bought ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-slate-300 hover:border-amber-500 bg-white'}" aria-label="Toggle bought">
+                  ${item.bought ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+                </button>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-1.5">
+                    <span class="text-sm font-bold ${item.bought ? 'line-through text-slate-500' : 'text-slate-900'}">${escapeHtml(item.name)}</span>
+                    <span class="text-xs font-semibold px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700">${escapeHtml(item.qty)}</span>
+                    ${item.urgent && !item.bought ? `<span class="text-[11px] font-extrabold px-2 py-0.5 rounded-lg bg-rose-100 text-rose-700">${t.urgentBadge}</span>` : ''}
+                  </div>
+                  <div class="flex flex-wrap items-center gap-2 mt-1 text-xs text-slate-500">
+                    <span class="inline-flex items-center gap-1">${cat.icon} ${cat[state.lang]}</span>
+                    ${item.note ? `<span class="text-slate-600">• ${escapeHtml(item.note)}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" data-action="urgent" data-id="${item.id}" title="Toggle Urgent" class="p-2 rounded-xl hover:bg-rose-50 ${item.urgent ? 'text-rose-600' : 'text-slate-400'} transition">
+                  <i data-lucide="alert-circle" class="w-4 h-4"></i>
+                </button>
+                <button type="button" data-action="delete" data-id="${item.id}" title="Remove" class="p-2 rounded-xl hover:bg-slate-100 text-slate-400 hover:text-rose-600 transition">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderPapaView() {
+        const container = document.getElementById('papa-list-container');
+        const t = TEXT[state.lang];
+
+        // Update filter pill styles
+        document.querySelectorAll('.filter-pill').forEach(btn => {
+          const isActive = btn.getAttribute('data-filter') === state.filter;
+          btn.className = `filter-pill px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+            isActive ? 'bg-amber-500 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
+          }`;
+        });
+
+        let filtered = state.items.filter(item => {
+          if (state.filter === 'pending') return !item.bought;
+          if (state.filter === 'urgent') return !item.bought && item.urgent;
+          if (state.filter === 'bought') return item.bought;
+          return true;
+        });
+
+        if (filtered.length === 0) {
+          const isAllBought = state.items.length > 0 && state.items.every(i => i.bought) && state.filter !== 'bought';
+          container.innerHTML = `
+            <div class="bg-white rounded-3xl border border-slate-200 p-10 text-center shadow-xs">
+              <div class="w-14 h-14 mx-auto mb-3 rounded-2xl ${isAllBought ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'} flex items-center justify-center">
+                <i data-lucide="${isAllBought ? 'party-popper' : 'shopping-cart'}" class="w-7 h-7"></i>
+              </div>
+              <p class="text-base font-extrabold text-slate-900">${isAllBought ? t.allDoneTitle : t.emptyTitle}</p>
+              <p class="text-sm text-slate-500 mt-1">${isAllBought ? t.allDoneSub : t.emptySub}</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Group by category for easy shopping at each shop
+        const groups = {};
+        filtered.forEach(item => {
+          const key = item.category || 'grocery';
+          if (!groups[key]) groups[key] = [];
+          groups[key].push(item);
+        });
+
+        container.innerHTML = Object.entries(groups).map(([catKey, items]) => {
+          const cat = CATEGORIES[catKey] || CATEGORIES.grocery;
+          items.sort((a, b) => {
+            if (a.bought !== b.bought) return a.bought ? 1 : -1;
+            if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+            return b.createdAt - a.createdAt;
+          });
+
+          const cardsHtml = items.map(item => `
+            <button type="button" data-action="toggle" data-id="${item.id}" class="tap-card w-full text-left rounded-2xl border-2 p-4 flex items-center justify-between gap-4 transition ${
+              item.bought
+                ? 'bg-emerald-50/70 border-emerald-300 opacity-75'
+                : item.urgent
+                  ? 'bg-white border-rose-400 shadow-sm'
+                  : 'bg-white border-slate-200 hover:border-amber-400 shadow-xs'
+            }">
+              <div class="flex items-center gap-3.5 min-w-0 flex-1">
+                <div class="w-9 h-9 rounded-xl border-2 flex items-center justify-center shrink-0 transition ${
+                  item.bought
+                    ? 'bg-emerald-500 border-emerald-500 text-white'
+                    : item.urgent
+                      ? 'border-rose-400 bg-rose-50'
+                      : 'border-slate-300 bg-slate-50'
+                }">
+                  ${item.bought ? '<i data-lucide="check" class="w-5 h-5"></i>' : ''}
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-base sm:text-lg font-extrabold ${item.bought ? 'line-through text-slate-500' : 'text-slate-900'}">${escapeHtml(item.name)}</span>
+                    ${item.urgent && !item.bought ? `<span class="text-xs font-extrabold px-2 py-0.5 rounded-lg bg-rose-600 text-white">${t.urgentBadge}</span>` : ''}
+                  </div>
+                  <p class="text-sm font-semibold text-amber-700 mt-0.5">${escapeHtml(item.qty)}${item.note ? ` <span class="text-slate-500 font-normal">• ${escapeHtml(item.note)}</span>` : ''}</p>
+                </div>
+              </div>
+              <span class="text-xs font-bold px-2.5 py-1 rounded-xl shrink-0 ${
+                item.bought ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'
+              }">
+                ${item.bought ? t.boughtLabel : t.tapToBuy}
+              </span>
+            </button>
+          `).join('');
+
+          return `
+            <div class="space-y-2.5">
+              <div class="flex items-center gap-2 px-1">
+                <span class="text-lg">${cat.icon}</span>
+                <h3 class="text-sm font-extrabold text-slate-800">${cat[state.lang]}</h3>
+                <span class="text-xs font-bold text-slate-400">(${items.filter(i => !i.bought).length})</span>
+              </div>
+              <div class="space-y-2.5">${cardsHtml}</div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      function renderTabs() {
+        const tabAdd = document.getElementById('tab-add');
+        const tabPapa = document.getElementById('tab-papa');
+        const viewAdd = document.getElementById('view-add');
+        const viewPapa = document.getElementById('view-papa');
+
+        if (state.view === 'add') {
+          tabAdd.className = 'py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition bg-white text-amber-700 shadow-sm';
+          tabPapa.className = 'py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition text-slate-600 hover:text-slate-900';
+          viewAdd.classList.remove('hidden');
+          viewPapa.classList.add('hidden');
+        } else {
+          tabPapa.className = 'py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition bg-white text-emerald-700 shadow-sm';
+          tabAdd.className = 'py-2.5 px-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition text-slate-600 hover:text-slate-900';
+          viewPapa.classList.remove('hidden');
+          viewAdd.classList.add('hidden');
+        }
+      }
+
+      function render() {
+        renderStaticText();
+        renderTabs();
+        renderProgress();
+        renderQuickPresets();
+        renderAddViewList();
+        renderPapaView();
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      }
+
+      // Event Listeners
+      document.getElementById('tab-add').addEventListener('click', () => {
+        state.view = 'add';
+        render();
+      });
+
+      document.getElementById('tab-papa').addEventListener('click', () => {
+        state.view = 'papa';
+        render();
+      });
+
+      document.getElementById('lang-toggle').addEventListener('click', () => {
+        state.lang = state.lang === 'en' ? 'hi' : 'en';
+        saveLang();
+        render();
+      });
+
+      document.getElementById('sound-toggle').addEventListener('click', () => {
+        state.soundEnabled = !state.soundEnabled;
+        const icon = document.getElementById('sound-icon');
+        icon.setAttribute('data-lucide', state.soundEnabled ? 'volume-2' : 'volume-x');
+        if (window.lucide) window.lucide.createIcons();
+      });
+
+      document.getElementById('add-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const nameEl = document.getElementById('item-name');
+        const qtyEl = document.getElementById('item-qty');
+        const catEl = document.getElementById('item-category');
+        const noteEl = document.getElementById('item-note');
+        const urgentEl = document.getElementById('item-urgent');
+
+        addItem(nameEl.value, qtyEl.value, catEl.value, noteEl.value, urgentEl.checked);
+        nameEl.value = '';
+        qtyEl.value = '';
+        noteEl.value = '';
+        urgentEl.checked = false;
+        nameEl.focus();
+      });
+
+      document.getElementById('quick-items-grid').addEventListener('click', (e) => {
+        const btn = e.target.closest('.preset-btn');
+        if (!btn) return;
+        const idx = Number(btn.getAttribute('data-preset-idx'));
+        const preset = QUICK_PRESETS[idx];
+        if (!preset) return;
+        const name = state.lang === 'hi' ? preset.hi : preset.en;
+        addItem(name, preset.qty, preset.cat, '', false);
+      });
+
+      // Delegated actions for Add View & Papa View lists
+      document.body.addEventListener('click', (e) => {
+        const actionEl = e.target.closest('[data-action]');
+        if (!actionEl) return;
+        const action = actionEl.getAttribute('data-action');
+        const id = actionEl.getAttribute('data-id');
+        if (action === 'toggle') toggleBought(id);
+        else if (action === 'urgent') toggleUrgent(id);
+        else if (action === 'delete') openPasskeyModal({ type: 'delete', id });
+      });
+
+      // Filter pills
+      document.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.filter = btn.getAttribute('data-filter');
+          renderPapaView();
+          if (window.lucide) window.lucide.createIcons();
+        });
+      });
+
+      // Copy & WhatsApp
+      document.getElementById('copy-btn').addEventListener('click', copyListToClipboard);
+      document.getElementById('whatsapp-btn').addEventListener('click', sendWhatsApp);
+
+      // Passkey Modal for Delete & Empty/Clear
+      let pendingProtectedAction = null;
+
+      function openPasskeyModal(actionObj) {
+        const t = TEXT[state.lang];
+        pendingProtectedAction = actionObj;
+        const titleEl = document.getElementById('modal-title');
+        const descEl = document.getElementById('modal-desc');
+        const inputEl = document.getElementById('passkey-input');
+        const errEl = document.getElementById('passkey-error');
+
+        if (actionObj.type === 'delete') {
+          titleEl.textContent = t.modalTitleDelete;
+          descEl.textContent = t.modalDescDelete;
+        } else if (actionObj.type === 'empty') {
+          titleEl.textContent = t.modalTitleEmpty;
+          descEl.textContent = t.modalDescEmpty;
+        } else {
+          titleEl.textContent = t.modalTitleClear;
+          descEl.textContent = t.modalDescClear;
+        }
+
+        inputEl.value = '';
+        errEl.classList.add('hidden');
+        errEl.textContent = '';
+        document.getElementById('confirm-modal').classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+        setTimeout(() => inputEl.focus(), 50);
+      }
+
+      function closePasskeyModal() {
+        pendingProtectedAction = null;
+        document.getElementById('confirm-modal').classList.add('hidden');
+      }
+
+      function submitPasskeyModal() {
+        const inputEl = document.getElementById('passkey-input');
+        const errEl = document.getElementById('passkey-error');
+        if (inputEl.value.trim() !== PASSKEY) {
+          errEl.textContent = TEXT[state.lang].passkeyWrong;
+          errEl.classList.remove('hidden');
+          inputEl.focus();
+          return;
+        }
+        const actionObj = pendingProtectedAction;
+        closePasskeyModal();
+        if (!actionObj) return;
+        if (actionObj.type === 'delete') deleteItem(actionObj.id);
+        else if (actionObj.type === 'clear') clearBought();
+        else if (actionObj.type === 'empty') emptyAll();
+      }
+
+      function openClearModal() {
+        if (!state.items.some(i => i.bought)) return;
+        openPasskeyModal({ type: 'clear' });
+      }
+
+      function openEmptyModal() {
+        if (state.items.length === 0) return;
+        openPasskeyModal({ type: 'empty' });
+      }
+
+      document.getElementById('clear-bought-btn').addEventListener('click', openClearModal);
+      document.getElementById('reset-all-btn').addEventListener('click', openClearModal);
+      document.getElementById('empty-all-btn').addEventListener('click', openEmptyModal);
+      document.getElementById('modal-cancel').addEventListener('click', closePasskeyModal);
+      document.getElementById('modal-confirm').addEventListener('click', submitPasskeyModal);
+      document.getElementById('passkey-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitPasskeyModal();
+        }
+      });
+
+      // Voice Input (Web Speech API)
+      document.getElementById('voice-btn').addEventListener('click', () => {
+        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRec) {
+          showToast(TEXT[state.lang].toastVoiceUnsupported);
+          return;
+        }
+        const voiceBtn = document.getElementById('voice-btn');
+        const label = document.getElementById('voice-btn-label');
+        const recognition = new SpeechRec();
+        recognition.lang = state.lang === 'hi' ? 'hi-IN' : 'en-IN';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        voiceBtn.classList.add('pulse-ring', 'bg-rose-50', 'text-rose-700', 'border-rose-300');
+        label.textContent = TEXT[state.lang].listening;
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          document.getElementById('item-name').value = transcript;
+        };
+        recognition.onerror = () => {
+          showToast(TEXT[state.lang].toastVoiceUnsupported);
+        };
+        recognition.onend = () => {
+          voiceBtn.classList.remove('pulse-ring', 'bg-rose-50', 'text-rose-700', 'border-rose-300');
+          label.textContent = TEXT[state.lang].voiceBtn;
+        };
+        try {
+          recognition.start();
+        } catch (err) {
+          voiceBtn.classList.remove('pulse-ring');
+          label.textContent = TEXT[state.lang].voiceBtn;
+        }
+      });
+
+      // Initial render
+      render();
+    })();
+  </script>
+</body>
+</html>
